@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres_dw
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=walid1234@
+      - POSTGRES_DB=de_warehouse
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  spark-master:
+    image: bitnami/spark:3.5.1
+    container_name: spark_master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    volumes:
+      - ./datasets:/datasets
+
+  spark-worker:
+    image: bitnami/spark:3.5.1
+    container_name: spark_worker
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark_master:7077
+    volumes:
+      - ./datasets:/datasets
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    ports:
+      - "3001:3000"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
+
